@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Simulador de crédito bancario en Colombia: cuota fija, seguro de vida deudor y plan de pagos.">
+  <meta name="theme-color" content="#0f766e">
+
+  <title>Simulador de Crédito</title>
+
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --text: #14202b;
+      --muted: #5d6b78;
+      --border: #e2e7ec;
+      --input-bg: #f8fafb;
+      --primary: #0f766e;
+      --primary-hover: #0b5f58;
+      --primary-soft: #e6f4f2;
+      --interes: #e07a3f;
+      --capital: #0f766e;
+      --seguro: #8b9bb0;
+      --aviso-bg: #fff6e0;
+      --aviso-border: #e8b339;
+      --aviso-text: #7a5300;
+      --error: #c62828;
+      --shadow: 0 1px 2px rgba(16, 24, 40, .04), 0 4px 16px rgba(16, 24, 40, .06);
+      --radius: 16px;
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0e1418;
+        --card: #161e24;
+        --text: #e7edf2;
+        --muted: #93a2af;
+        --border: #26323b;
+        --input-bg: #1c262d;
+        --primary: #2bb3a3;
+        --primary-hover: #3cc7b6;
+        --primary-soft: #16302d;
+        --interes: #f0955c;
+        --capital: #2bb3a3;
+        --seguro: #6f8093;
+        --aviso-bg: #2d2414;
+        --aviso-border: #b98a1f;
+        --aviso-text: #f1cf7e;
+        --error: #ff6b6b;
+        --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+        color-scheme: dark;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .contenedor {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+
+    header {
+      margin-bottom: 1.75rem;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: clamp(1.6rem, 3vw, 2.1rem);
+      letter-spacing: -0.02em;
+    }
+
+    header p {
+      margin: .35rem 0 0;
+      color: var(--muted);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(280px, 380px) 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+    }
+
+    .card h2 {
+      margin: 0 0 1rem;
+      font-size: 1.05rem;
+    }
+
+    /* FORMULARIO */
+
+    form {
+      position: sticky;
+      top: 1rem;
+    }
+
+    .campo {
+      margin-bottom: 1rem;
+    }
+
+    .campo label {
+      display: block;
+      font-size: .85rem;
+      font-weight: 600;
+      margin-bottom: .35rem;
+    }
+
+    .campo .ayuda {
+      display: block;
+      font-size: .78rem;
+      color: var(--muted);
+      margin-top: .3rem;
+    }
+
+    .input-grupo {
+      position: relative;
+    }
+
+    .input-grupo .prefijo,
+    .input-grupo .sufijo {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: .9rem;
+      pointer-events: none;
+    }
+
+    .input-grupo .prefijo {
+      left: .85rem;
+    }
+
+    .input-grupo .sufijo {
+      right: .85rem;
+    }
+
+    input,
+    select {
+      width: 100%;
+      font: inherit;
+      color: var(--text);
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .65rem .85rem;
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .input-grupo .con-prefijo {
+      padding-left: 1.8rem;
+    }
+
+    .input-grupo .con-sufijo {
+      padding-right: 3.4rem;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-soft);
+    }
+
+    .segmentado {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 3px;
+      gap: 3px;
+    }
+
+    .segmentado input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .segmentado label {
+      margin: 0;
+      text-align: center;
+      padding: .45rem .25rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: background .15s, color .15s;
+    }
+
+    .segmentado input:checked+label {
+      background: var(--card);
+      color: var(--primary);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+    }
+
+    .segmentado input:focus-visible+label {
+      outline: 2px solid var(--primary);
+    }
+
+    .fila-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem;
+    }
+
+    button {
+      width: 100%;
+      font: inherit;
+      font-weight: 600;
+      color: #fff;
+      background: var(--primary);
+      border: none;
+      border-radius: 10px;
+      padding: .8rem;
+      cursor: pointer;
+      transition: background .15s;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    /* RESULTADOS */
+
+    .vacio {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      min-height: 320px;
+      color: var(--muted);
+    }
+
+    .vacio svg {
+      width: 56px;
+      height: 56px;
+      margin-bottom: .75rem;
+      opacity: .6;
+    }
+
+    .resultados {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .cuota-destacada {
+      background: linear-gradient(135deg, var(--primary), #134e4a);
+      color: #fff;
+      border: none;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .cuota-destacada {
+        background: linear-gradient(135deg, #12695f, #0d3d39);
+      }
+    }
+
+    .cuota-destacada .etiqueta {
+      font-size: .85rem;
+      opacity: .85;
+    }
+
+    .cuota-destacada .valor {
+      font-size: clamp(2rem, 5vw, 2.8rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cuota-destacada .desglose {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem 1.25rem;
+      margin-top: .6rem;
+      font-size: .88rem;
+      opacity: .9;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+
+    .kpi {
+      padding: 1.1rem 1.25rem;
+    }
+
+    .kpi .etiqueta {
+      font-size: .8rem;
+      color: var(--muted);
+    }
+
+    .kpi .valor {
+      font-size: 1.35rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .kpi .sub {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .tasas {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: .75rem 1.5rem;
+    }
+
+    .tasas div span {
+      display: block;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .tasas div strong {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .aviso {
+      background: var(--aviso-bg);
+      border: 1px solid var(--aviso-border);
+      color: var(--aviso-text);
+      border-radius: 12px;
+      padding: .85rem 1rem;
+      font-size: .9rem;
+    }
+
+    .error {
+      color: var(--error);
+      font-size: .9rem;
+      margin: .5rem 0 0;
+    }
+
+    .nota {
+      color: var(--muted);
+      font-size: .82rem;
+      margin: .75rem 0 0;
+    }
+
+    /* GRAFICA */
+
+    .leyenda {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      font-size: .8rem;
+      color: var(--muted);
+      margin-bottom: .75rem;
+    }
+
+    .leyenda i {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      margin-right: .35rem;
+      vertical-align: -1px;
+    }
+
+    .grafica svg {
+      width: 100%;
+      height: 200px;
+      display: block;
+    }
+
+    .grafica .ejes {
+      display: flex;
+      justify-content: space-between;
+      font-size: .75rem;
+      color: var(--muted);
+      margin-top: .35rem;
+    }
+
+    /* TABLA */
+
+    details summary {
+      cursor: pointer;
+      font-weight: 600;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+
+    details summary::after {
+      content: "▾";
+      color: var(--muted);
+      transition: transform .2s;
+    }
+
+    details[open] summary::after {
+      transform: rotate(180deg);
+    }
+
+    .tabla-scroll {
+      overflow-x: auto;
+      margin-top: 1rem;
+      max-height: 520px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .85rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    th,
+    td {
+      padding: .55rem .75rem;
+      text-align: right;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      position: sticky;
+      top: 0;
+      background: var(--input-bg);
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      color: var(--muted);
+      z-index: 1;
+    }
+
+    td:first-child,
+    th:first-child {
+      text-align: center;
+    }
+
+    tbody tr:hover {
+      background: var(--primary-soft);
+    }
+
+    footer {
+      margin-top: 2rem;
+      font-size: .78rem;
+      color: var(--muted);
+      text-align: center;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="contenedor">
+
+    <header>
+      <h1>Simulador de Crédito</h1>
+      <p>Calcula tu cuota fija, el seguro de vida deudor y el plan de pagos como lo hacen los bancos en Colombia.</p>
+    </header>
+
+    <div class="layout">
+
+      <!-- CAPTURA DE DATOS FORMULARIO -->
+      <form id="formulario" class="card" novalidate>
+        <h2>Datos del crédito</h2>
+
+        <div class="campo">
+          <label for="valorCredito2">Valor del crédito</label>
+          <div class="input-grupo">
+            <span class="prefijo">$</span>
+            <input type="text" id="valorCredito2" class="con-prefijo" inputmode="numeric" placeholder="48.500.000"
+              autocomplete="off">
+          </div>
+        </div>
+
+        <div class="campo">
+          <label>Tipo de tasa</label>
+          <div class="segmentado" role="radiogroup">
+            <input type="radio" name="tipoTasa" id="tasaEA" value="EA" checked>
+            <label for="tasaEA" title="Efectiva Anual">E.A.</label>
+            <input type="radio" name="tipoTasa" id="tasaMV" value="MV">
+            <label for="tasaMV" title="Mensual Vencida">M.V.</label>
+            <input type="radio" name="tipoTasa" id="tasaNMV" value="NMV">
+            <label for="tasaNMV" title="Nominal Anual Mes Vencido">N.A.M.V.</label>
+          </div>
+          <span class="ayuda" id="ayudaTasa"></span>
+        </div>
+
+        <div class="fila-2">
+          <div class="campo">
+            <label for="interesAnual2">Tasa de interés</label>
+            <div class="input-grupo">
+              <input type="text" id="interesAnual2" class="con-sufijo" inputmode="decimal" placeholder="20,27"
+                autocomplete="off">
+              <span class="sufijo" id="sufijoTasa">% E.A.</span>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="numeroCuotas2">Plazo</label>
+            <div class="input-grupo">
+              <input type="text" id="numeroCuotas2" class="con-sufijo" inputmode="numeric" placeholder="60"
+                autocomplete="off">
+              <span class="sufijo">meses</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="seguroVida2">Seguro de vida deudor</label>
+          <div class="input-grupo">
+            <input type="text" id="seguroVida2" class="con-sufijo" inputmode="decimal" value="0,1104"
+              autocomplete="off">
+            <span class="sufijo">% mes</span>
+          </div>
+          <span class="ayuda">Opcional. Déjalo vacío para calcular sin seguro.</span>
+        </div>
+
+        <div class="campo">
+          <label for="baseSeguro">Seguro calculado sobre</label>
+          <select id="baseSeguro">
+            <option value="desembolso">Monto desembolsado (cuota fija)</option>
+            <option value="saldo">Saldo de cada mes (cuota decreciente)</option>
+          </select>
+        </div>
+
+        <button type="submit">Calcular</button>
+        <p class="error" id="error" hidden></p>
+      </form>
+
+      <!-- RESULTADOS -->
+      <section id="resultado">
+        <div class="card vacio">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="2" width="16" height="20" rx="2" />
+            <path d="M8 6h8M8 10h2M14 10h2M8 14h2M14 14h2M8 18h2M14 18h2" />
+          </svg>
+          <p>Ingresa los datos del crédito para ver tu cuota y el plan de pagos.</p>
+        </div>
+      </section>
+
+    </div>
+
+    <footer>
+      Simulación de referencia. La cuota exacta la define la entidad financiera en el plan de pagos.
+    </footer>
+  </div>
+
+  <script>
+
+    // Tasa de usura certificada por la Superfinanciera (crédito de consumo y ordinario).
+    // Se actualiza mensualmente: revisar en https://www.superfinanciera.gov.co
+    const TASA_USURA_EA = 0.2859;
+    const PERIODO_USURA = "octubre de 2026";
+
+    const TIPOS_TASA = {
+      EA: { nombre: "E.A.", ayuda: "Efectiva Anual. Así la informan los bancos. Ej: 20,27", placeholder: "20,27" },
+      MV: { nombre: "M.V.", ayuda: "Mensual Vencida, la tasa de cada mes. Ej: 1,55", placeholder: "1,55" },
+      NMV: { nombre: "N.A.M.V.", ayuda: "Nominal Anual Mes Vencido, se divide entre 12. Ej: 18,6", placeholder: "18,6" }
+    };
+
+    var formulario = document.getElementById("formulario");
+    var valorCredito2 = document.getElementById("valorCredito2");
+    var interesAnual2 = document.getElementById("interesAnual2");
+    var numeroCuotas2 = document.getElementById("numeroCuotas2");
+    var seguroVida2 = document.getElementById("seguroVida2");
+    var baseSeguro = document.getElementById("baseSeguro");
+    var resultado = document.getElementById("resultado");
+    var error = document.getElementById("error");
+    var ayudaTasa = document.getElementById("ayudaTasa");
+    var sufijoTasa = document.getElementById("sufijoTasa");
+    var hayResultado = false;
+
+    // Formato de moneda en pesos colombianos, sin decimales
+    function currency(number) {
+      return new Intl.NumberFormat("es-CO", {
+        style: "currency",
+        currency: "COP",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(number);
+    }
+
+    // Formato de porcentaje con hasta 4 decimales
+    function porcentaje(number) {
+      return new Intl.NumberFormat("es-CO", {
+        style: "percent",
+        maximumFractionDigits: 4
+      }).format(number);
+    }
+
+    // Convierte texto a número aceptando coma o punto decimal ("0,1104" o "0.1104")
+    function leerDecimal(texto) {
+      texto = texto.trim().replace(",", ".");
+      return texto === "" ? NaN : Number(texto);
+    }
+
+    // Lee el valor del crédito ignorando los separadores de miles
+    function leerPesos(texto) {
+      var digitos = texto.replace(/\D/g, "");
+      return digitos === "" ? NaN : Number(digitos);
+    }
+
+    function tipoSeleccionado() {
+      return document.querySelector('input[name="tipoTasa"]:checked').value;
+    }
+
+    // Tasa mensual vencida según el tipo de tasa ingresada
+    // E.A.:     i = (1 + EA)^(1/12) - 1   (como la informan los bancos en Colombia)
+    // M.V.:     i = tasa                  (ya es la tasa mensual)
+    // N.A.M.V.: i = tasa / 12
+    function interesMes(tasa, tipo) {
+      if (tipo === "EA") {
+        return (1 + tasa) ** (1 / 12) - 1;
+      }
+      if (tipo === "MV") {
+        return tasa;
+      }
+      return tasa / 12;
+    }
+
+    // Tasa efectiva anual equivalente a una tasa mensual
+    function efectivaAnual(interMes) {
+      return (1 + interMes) ** 12 - 1;
+    }
+
+    // Cuota fija mensual (sistema francés)
+    function cuotaMes(valorCredito, interMes, numeroCuotas) {
+      if (interMes === 0) {
+        return valorCredito / numeroCuotas;
+      }
+      var factor = (1 + interMes) ** numeroCuotas;
+      return valorCredito * (interMes * factor) / (factor - 1);
+    }
+
+    // Formatea el valor del crédito con puntos de miles mientras se escribe
+    valorCredito2.addEventListener("input", function () {
+      var numero = leerPesos(valorCredito2.value);
+      valorCredito2.value = isNaN(numero) ? "" : new Intl.NumberFormat("es-CO").format(numero);
+    });
+
+    // Actualiza ayuda y sufijo según el tipo de tasa
+    function actualizarTipoTasa() {
+      var tipo = TIPOS_TASA[tipoSeleccionado()];
+      ayudaTasa.textContent = tipo.ayuda;
+      sufijoTasa.textContent = "% " + tipo.nombre;
+      interesAnual2.placeholder = tipo.placeholder;
+    }
+    document.querySelectorAll('input[name="tipoTasa"]').forEach(function (radio) {
+      radio.addEventListener("change", actualizarTipoTasa);
+    });
+    actualizarTipoTasa();
+
+    formulario.addEventListener("submit", function (evento) {
+      evento.preventDefault();
+      calculos();
+    });
+
+    // Si ya hay un resultado en pantalla, se recalcula al cambiar cualquier dato
+    formulario.addEventListener("input", function () {
+      if (hayResultado) {
+        calculos();
+      }
+    });
+
+    function calculos() {
+      var valorCredito = leerPesos(valorCredito2.value);
+      var tasa = leerDecimal(interesAnual2.value) / 100;
+      var tipo = tipoSeleccionado();
+      var numeroCuotas = Number(numeroCuotas2.value.trim());
+      var seguroMes = seguroVida2.value.trim() === "" ? 0 : leerDecimal(seguroVida2.value) / 100;
+      var seguroSobreSaldo = baseSeguro.value === "saldo";
+
+      // Validación de datos
+      if (!(valorCredito > 0) || !(tasa >= 0) || !(Number.isInteger(numeroCuotas) && numeroCuotas >= 1) || !(seguroMes >= 0)) {
+        error.textContent = "Revisa los datos: valor mayor a 0, tasa de 0 o más, plazo en meses enteros y seguro de 0 o más.";
+        error.hidden = false;
+        return;
+      }
+      error.hidden = true;
+
+      var interMes = interesMes(tasa, tipo);
+      var tasaEA = efectivaAnual(interMes);
+      var cuotaMensual = cuotaMes(valorCredito, interMes, numeroCuotas);
+
+      // PLAN DE PAGOS
+      var filas = "";
+      var datosGrafica = [];
+      var saldo = valorCredito;
+      var totalIntereses = 0;
+      var totalSeguro = 0;
+      var primerSeguro = 0;
+
+      for (let i = 1; i <= numeroCuotas; i++) {
+        var valorInt = saldo * interMes;
+        var amortizacion = cuotaMensual - valorInt;
+        // El seguro se cobra sobre el saldo del mes o sobre el monto desembolsado (valor fijo)
+        var seguro = (seguroSobreSaldo ? saldo : valorCredito) * seguroMes;
+        var cuotaTotal = cuotaMensual + seguro;
+        var saldoFinal = saldo + valorInt - cuotaMensual;
+        // Evita residuos por redondeo en la última cuota
+        if (Math.abs(saldoFinal) < 0.5) {
+          saldoFinal = 0;
+        }
+        if (i === 1) {
+          primerSeguro = seguro;
+        }
+
+        totalIntereses += valorInt;
+        totalSeguro += seguro;
+        datosGrafica.push({ interes: valorInt, capital: amortizacion, seguro: seguro });
+
+        filas += "<tr>" +
+          "<td>" + i + "</td>" +
+          "<td>" + currency(saldo) + "</td>" +
+          "<td>" + currency(valorInt) + "</td>" +
+          "<td>" + currency(amortizacion) + "</td>" +
+          "<td>" + currency(cuotaMensual) + "</td>" +
+          "<td>" + currency(seguro) + "</td>" +
+          "<td><strong>" + currency(cuotaTotal) + "</strong></td>" +
+          "<td>" + currency(saldoFinal) + "</td>" +
+          "</tr>";
+
+        saldo = saldoFinal;
+      }
+
+      var totalPagado = valorCredito + totalIntereses + totalSeguro;
+      var html = "";
+
+      // Aviso de tasa de usura
+      if (tasaEA > TASA_USURA_EA) {
+        html += '<div class="aviso"><strong>Tasa por encima de la usura.</strong> La tasa equivalente (' +
+          porcentaje(tasaEA) + ' E.A.) supera la tasa de usura de ' + PERIODO_USURA + ' (' +
+          porcentaje(TASA_USURA_EA) + ' E.A.) para crédito de consumo y ordinario.</div>';
+      }
+
+      // CUOTA DESTACADA
+      var tituloCuota = seguroSobreSaldo && seguroMes > 0 ? "Primera cuota mensual" : "Cuota mensual";
+      html += '<div class="card cuota-destacada">' +
+        '<div class="etiqueta">' + tituloCuota + '</div>' +
+        '<div class="valor">' + currency(cuotaMensual + primerSeguro) + '</div>' +
+        '<div class="desglose">' +
+        '<span>Capital + interés: <strong>' + currency(cuotaMensual) + '</strong></span>' +
+        '<span>Seguro: <strong>' + currency(primerSeguro) + '</strong></span>' +
+        '<span>' + numeroCuotas + ' meses</span>' +
+        '</div></div>';
+
+      // KPIs
+      html += '<div class="kpis">' +
+        '<div class="card kpi"><div class="etiqueta">Total pagado</div><div class="valor">' + currency(totalPagado) +
+        '</div><div class="sub">' + (totalPagado / valorCredito).toFixed(2).replace(".", ",") + ' veces el préstamo</div></div>' +
+        '<div class="card kpi"><div class="etiqueta">Total intereses</div><div class="valor">' + currency(totalIntereses) +
+        '</div><div class="sub">' + (totalIntereses / valorCredito * 100).toFixed(1).replace(".", ",") + '% del préstamo</div></div>' +
+        '<div class="card kpi"><div class="etiqueta">Total seguro de vida</div><div class="valor">' + currency(totalSeguro) +
+        '</div><div class="sub">' + currency(seguroMes * 1000000) + ' por millón al mes</div></div>' +
+        '</div>';
+
+      // TASAS
+      html += '<div class="card"><h2>Tasas</h2><div class="tasas">' +
+        '<div><span>Tasa ingresada</span><strong>' + porcentaje(tasa) + ' ' + TIPOS_TASA[tipo].nombre + '</strong></div>' +
+        '<div><span>Mensual vencida</span><strong>' + porcentaje(interMes) + '</strong></div>' +
+        '<div><span>Efectiva anual</span><strong>' + porcentaje(tasaEA) + '</strong></div>' +
+        '<div><span>Usura ' + PERIODO_USURA + '</span><strong>' + porcentaje(TASA_USURA_EA) + ' E.A.</strong></div>' +
+        '</div>';
+      if (seguroMes > 0) {
+        html += '<p class="nota">' + (seguroSobreSaldo
+          ? "El seguro se calcula sobre el saldo de cada mes, por eso la cuota total baja a medida que pagas."
+          : "El seguro se calcula sobre el monto desembolsado, por eso la cuota total es fija durante todo el crédito.") + '</p>';
+      }
+      html += '</div>';
+
+      // GRAFICA
+      html += '<div class="card grafica"><h2>Composición de la cuota mes a mes</h2>' +
+        '<div class="leyenda"><span><i style="background:var(--capital)"></i>Capital</span>' +
+        '<span><i style="background:var(--interes)"></i>Interés</span>' +
+        (seguroMes > 0 ? '<span><i style="background:var(--seguro)"></i>Seguro</span>' : '') + '</div>' +
+        graficaCuotas(datosGrafica) +
+        '<div class="ejes"><span>Mes 1</span><span>Mes ' + numeroCuotas + '</span></div></div>';
+
+      // TABLA PLAN DE PAGOS
+      html += '<div class="card"><details><summary>Plan de pagos (' + numeroCuotas + ' cuotas)</summary>' +
+        '<div class="tabla-scroll"><table><thead><tr>' +
+        '<th>Mes</th><th>Saldo inicial</th><th>Interés</th><th>Amortización</th>' +
+        '<th>Cuota</th><th>Seguro</th><th>Cuota total</th><th>Saldo final</th>' +
+        '</tr></thead><tbody>' + filas + '</tbody></table></div></details></div>';
+
+      // Conserva abierto el plan de pagos si el usuario lo había desplegado
+      var abierto = resultado.querySelector("details[open]") !== null;
+      resultado.innerHTML = '<div class="resultados">' + html + '</div>';
+      if (abierto) {
+        resultado.querySelector("details").open = true;
+      }
+      hayResultado = true;
+    }
+
+    // Barras apiladas en SVG: capital, interés y seguro de cada cuota
+    function graficaCuotas(datos) {
+      var ancho = 1000;
+      var alto = 200;
+      var maximo = Math.max.apply(null, datos.map(function (d) { return d.interes + d.capital + d.seguro; }));
+      var paso = ancho / datos.length;
+      var barra = Math.max(paso * 0.75, 1);
+      var svg = '<svg viewBox="0 0 ' + ancho + ' ' + alto + '" preserveAspectRatio="none" role="img" aria-label="Composición de cada cuota">';
+
+      datos.forEach(function (d, i) {
+        var x = i * paso + (paso - barra) / 2;
+        var y = alto;
+        [["capital", d.capital], ["interes", d.interes], ["seguro", d.seguro]].forEach(function (parte) {
+          var h = parte[1] / maximo * alto;
+          if (h <= 0) {
+            return;
+          }
+          y -= h;
+          svg += '<rect x="' + x.toFixed(2) + '" y="' + y.toFixed(2) + '" width="' + barra.toFixed(2) +
+            '" height="' + h.toFixed(2) + '" fill="var(--' + parte[0] + ')"><title>Mes ' + (i + 1) + ' · ' +
+            (parte[0] === "interes" ? "Interés" : parte[0][0].toUpperCase() + parte[0].slice(1)) + ': ' +
+            currency(parte[1]) + '</title></rect>';
+        });
+      });
+
+      return svg + '</svg>';
+    }
+  </script>
+
+</body>
+
+</html>
