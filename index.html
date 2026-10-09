@@ -118,9 +118,12 @@
 
     /* FORMULARIO */
 
-    form {
-      position: sticky;
-      top: 1rem;
+    /* El formulario queda fijo al hacer scroll solo cuando va en columna aparte (escritorio) */
+    @media (min-width: 861px) {
+      form {
+        position: sticky;
+        top: 1rem;
+      }
     }
 
     .campo {
@@ -692,6 +695,10 @@
     formulario.addEventListener("submit", function (evento) {
       evento.preventDefault();
       calculos();
+      // En celular los resultados quedan debajo del formulario: baja hasta ellos
+      if (hayResultado && window.matchMedia("(max-width: 860px)").matches) {
+        resultado.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
 
     // Si ya hay un resultado en pantalla, se recalcula al cambiar cualquier dato
