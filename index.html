@@ -372,6 +372,7 @@
       /* En celular los indicadores se agrupan en una sola tarjeta, uno por fila */
       @media (max-width: 560px) {
         .kpis {
+          grid-template-columns: 1fr;
           gap: 0;
           background: var(--card);
           border: 1px solid var(--border);
@@ -398,6 +399,7 @@
           grid-column: 2;
           grid-row: 1 / span 2;
           font-size: 1.1rem;
+          white-space: nowrap;
         }
       }
 
@@ -683,13 +685,13 @@
               <input
                 type="radio"
                 name="tipoTasa"
-                id="tasaEA"
-                value="EA"
+                id="tasaMV"
+                value="MV"
                 checked
               />
-              <label for="tasaEA" title="Efectiva Anual">E.A.</label>
-              <input type="radio" name="tipoTasa" id="tasaMV" value="MV" />
               <label for="tasaMV" title="Mensual Vencida">M.V.</label>
+              <input type="radio" name="tipoTasa" id="tasaEA" value="EA" />
+              <label for="tasaEA" title="Efectiva Anual">E.A.</label>
               <input type="radio" name="tipoTasa" id="tasaNMV" value="NMV" />
               <label for="tasaNMV" title="Nominal Anual Mes Vencido"
                 >N.A.M.V.</label
