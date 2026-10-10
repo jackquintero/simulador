@@ -369,6 +369,60 @@
         color: var(--muted);
       }
 
+      /* Tarjeta "¿En qué se va el costo?" */
+      .barra-costo {
+        display: flex;
+        gap: 2px;
+        height: 8px;
+        margin: 0.45rem 0 0.5rem;
+        border-radius: 99px;
+        overflow: hidden;
+      }
+
+      /* La tarjeta del desglose necesita más ancho para valor y porcentaje en la misma línea */
+      @media (min-width: 1024px) {
+        .kpis {
+          grid-template-columns: 1fr 1fr 1.35fr;
+        }
+      }
+
+      .desglose-costo .linea {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .desglose-costo .linea span {
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .desglose-costo .linea em {
+        font-style: normal;
+        font-size: 0.75rem;
+      }
+
+      .desglose-costo .linea strong {
+        margin-left: auto;
+        white-space: nowrap;
+      }
+
+      .desglose-costo .linea i {
+        display: inline-block;
+        width: 9px;
+        height: 9px;
+        border-radius: 3px;
+        margin-right: 0.3rem;
+      }
+
+      .desglose-costo .sub {
+        margin-top: 0.2rem;
+      }
+
       /* En celular los indicadores se agrupan en una sola tarjeta, uno por fila */
       @media (max-width: 560px) {
         .kpis {
@@ -393,6 +447,10 @@
 
         .kpi + .kpi {
           border-top: 1px solid var(--border);
+        }
+
+        .kpi.desglose-costo {
+          display: block;
         }
 
         .kpi .valor {
@@ -783,11 +841,11 @@
                 <div class="valor">$ —</div>
               </div>
               <div class="card kpi">
-                <div class="etiqueta">Total intereses</div>
+                <div class="etiqueta">Costo del crédito</div>
                 <div class="valor">$ —</div>
               </div>
               <div class="card kpi">
-                <div class="etiqueta">Total seguro de vida</div>
+                <div class="etiqueta">¿En qué se va el costo?</div>
                 <div class="valor">$ —</div>
               </div>
             </div>
@@ -1088,6 +1146,7 @@
         html += "</div>";
 
         // KPIs
+        var costoCredito = totalIntereses + totalSeguro;
         html +=
           '<div class="kpis">' +
           '<div class="card kpi"><div class="etiqueta">Total pagado</div><div class="valor">' +
@@ -1095,16 +1154,15 @@
           '</div><div class="sub">' +
           (totalPagado / valorCredito).toFixed(2).replace(".", ",") +
           " veces el préstamo</div></div>" +
-          '<div class="card kpi"><div class="etiqueta">Total intereses</div><div class="valor">' +
-          currency(totalIntereses) +
+          '<div class="card kpi"><div class="etiqueta">Costo del crédito</div><div class="valor">' +
+          currency(costoCredito) +
           '</div><div class="sub">' +
-          ((totalIntereses / valorCredito) * 100).toFixed(1).replace(".", ",") +
-          "% del préstamo</div></div>" +
-          '<div class="card kpi"><div class="etiqueta">Total seguro de vida</div><div class="valor">' +
-          currency(totalSeguro) +
-          '</div><div class="sub">' +
-          currency(seguroMes * 1000000) +
-          " por millón al mes</div></div>" +
+          ((costoCredito / valorCredito) * 100).toFixed(1).replace(".", ",") +
+          (totalSeguro > 0
+            ? "% del préstamo en intereses y seguro"
+            : "% del préstamo en intereses") +
+          "</div></div>" +
+          desgloseCosto(totalIntereses, totalSeguro, seguroMes) +
           "</div>";
 
         // TASAS
@@ -1175,6 +1233,49 @@
           resultado.querySelector("details").open = true;
         }
         hayResultado = true;
+      }
+
+      // Tarjeta con la división del costo del crédito entre intereses y seguro
+      function desgloseCosto(intereses, seguro, seguroMes) {
+        var costo = intereses + seguro;
+        var partes = [["interes", "Intereses", intereses]];
+        if (seguro > 0) {
+          partes.push(["seguro", "Seguro", seguro]);
+        }
+        var barra = "";
+        var lineas = "";
+        partes.forEach(function (p) {
+          var peso = costo > 0 ? (p[2] / costo) * 100 : 0;
+          barra +=
+            '<span style="width:' +
+            peso.toFixed(1) +
+            "%;background:var(--" +
+            p[0] +
+            ')"></span>';
+          lineas +=
+            '<div class="linea"><span><i style="background:var(--' +
+            p[0] +
+            ')"></i>' +
+            p[1] +
+            " <em>" +
+            Math.round(peso) +
+            "%</em></span><strong>" +
+            currency(p[2]) +
+            "</strong></div>";
+        });
+        return (
+          '<div class="card kpi desglose-costo"><div class="etiqueta">¿En qué se va el costo?</div>' +
+          '<div class="barra-costo">' +
+          barra +
+          "</div>" +
+          lineas +
+          (seguro > 0
+            ? '<div class="sub">Seguro: ' +
+              currency(seguroMes * 1000000) +
+              " por millón al mes</div>"
+            : "") +
+          "</div>"
+        );
       }
 
       // Detalle de un mes de la gráfica; también sirve de leyenda
